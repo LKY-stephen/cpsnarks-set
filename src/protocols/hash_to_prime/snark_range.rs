@@ -12,13 +12,17 @@ use crate::{
     },
     utils::integer_to_bigint_mod_q,
 };
-use ark_ff::{PrimeField, UniformRand};
 use ark_ec::{AffineCurve, PairingEngine, ProjectiveCurve};
-use ark_relations::r1cs::{ConstraintSynthesizer, ConstraintSystemRef, SynthesisError};
+use ark_ff::{PrimeField, UniformRand};
 use ark_r1cs_std::{
-    alloc::{AllocVar, AllocationMode}, bits::ToBitsGadget, boolean::Boolean, eq::EqGadget, fields::fp::FpVar,
+    alloc::{AllocVar, AllocationMode},
+    bits::ToBitsGadget,
+    boolean::Boolean,
+    eq::EqGadget,
+    fields::fp::FpVar,
     Assignment,
 };
+use ark_relations::r1cs::{ConstraintSynthesizer, ConstraintSystemRef, SynthesisError};
 use rand::Rng;
 use rug::Integer;
 use std::ops::Sub;
@@ -29,23 +33,20 @@ pub struct HashToPrimeCircuit<E: PairingEngine> {
 }
 
 impl<E: PairingEngine> ConstraintSynthesizer<E::Fr> for HashToPrimeCircuit<E> {
-    fn generate_constraints(
-        self,
-        cs: ConstraintSystemRef<E::Fr>,
-    ) -> Result<(), SynthesisError> {
-        let f = FpVar::new_variable(ark_relations::ns!(cs, "alloc value"), || self.value.get(), AllocationMode::Input)?;
+    fn generate_constraints(self, cs: ConstraintSystemRef<E::Fr>) -> Result<(), SynthesisError> {
+        let f = FpVar::new_variable(
+            ark_relations::ns!(cs, "alloc value"),
+            || self.value.get(),
+            AllocationMode::Input,
+        )?;
         // big-endian bits
         let bits = f.to_non_unique_bits_be()?;
         let modulus_bits = E::Fr::size_in_bits();
         let bits_to_skip = modulus_bits - self.required_bit_size as usize;
         for b in bits[..bits_to_skip].iter() {
-            b.enforce_equal(
-                &Boolean::constant(false),
-            )?;
+            b.enforce_equal(&Boolean::constant(false))?;
         }
-        bits[bits_to_skip].enforce_equal(
-            &Boolean::constant(true),
-        )?;
+        bits[bits_to_skip].enforce_equal(&Boolean::constant(true))?;
 
         Ok(())
     }
@@ -157,8 +158,8 @@ mod test {
     };
     use accumulator::group::Rsa2048;
     use ark_bls12_381::{Bls12_381, Fr, G1Projective};
-    use merlin::Transcript;
     use ark_relations::r1cs::{ConstraintSynthesizer, ConstraintSystem};
+    use merlin::Transcript;
     use rand::thread_rng;
     use rug::rand::RandState;
     use rug::Integer;
@@ -174,10 +175,7 @@ mod test {
         c.generate_constraints(cs.clone()).unwrap();
         println!("num constraints: {}", cs.num_constraints());
         if !cs.is_satisfied().unwrap() {
-            panic!(format!(
-                "not satisfied: {:?}",
-                cs.which_is_unsatisfied().unwrap()
-            ));
+            panic!("not satisfied: {:?}", cs.which_is_unsatisfied().unwrap());
         }
     }
 

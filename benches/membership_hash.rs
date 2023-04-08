@@ -1,9 +1,7 @@
 use accumulator::group::Rsa2048;
 use accumulator::{group::Group, AccumulatorWithoutHashToPrime};
-use algebra::{
-    bls12_381::{Bls12_381, Fr, G1Projective},
-    PrimeField,
-};
+use ark_bls12_381::*;
+use ark_ff::PrimeField;
 use cpsnarks_set::{
     commitments::Commitment,
     parameters::Parameters,
@@ -24,6 +22,7 @@ use rand::thread_rng;
 use rug::rand::RandState;
 use rug::Integer;
 use std::cell::RefCell;
+use std::mem::size_of_val;
 
 const LARGE_PRIMES: [u64; 3] = [
     12_702_637_924_034_044_211,
@@ -111,6 +110,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
         )
         .unwrap();
     let proof = verifier_channel.proof().unwrap();
+    println!("The useful size of `proof` is {}", size_of_val(&proof));
     let verification_transcript = RefCell::new(Transcript::new(b"membership"));
     let mut prover_channel =
         TranscriptProverChannel::new(&protocol.crs, &verification_transcript, &proof);
@@ -140,7 +140,6 @@ pub fn criterion_benchmark(c: &mut Criterion) {
                 .unwrap();
         })
     });
-
     c.bench_function("membership_hash protocol verification", |b| {
         b.iter(|| {
             let verification_transcript = RefCell::new(Transcript::new(b"membership"));
